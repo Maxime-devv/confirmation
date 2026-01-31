@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Password Reset • Ballr</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body {
@@ -33,22 +34,37 @@
       margin-bottom: 12px;
     }
 
-    p {
-      color: #444;
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
       font-size: 16px;
-      line-height: 1.5;
-      margin-bottom: 20px;
     }
 
-    hr {
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      background-color: #0a84ff;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
       border: none;
-      border-top: 1px solid #e5e5e5;
-      margin: 24px 0;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #7aaefc;
+      cursor: not-allowed;
     }
 
     .hint {
       font-size: 14px;
       color: #777;
+      margin-top: 16px;
     }
 
     .footer {
@@ -63,19 +79,67 @@
   <div class="card">
     <h1>Password Reset 🔐</h1>
 
-    <p>Your password has been successfully updated.</p>
+    <p>Enter your new password below to reset your account password.</p>
 
-    <p>You can now return to the Ballr app and sign in using your new password.</p>
+    <input type="password" id="newPassword" placeholder="New password" />
+    <input type="password" id="confirmPassword" placeholder="Confirm password" />
 
-    <hr />
+    <button id="resetBtn">Reset Password</button>
 
-    <p class="hint">
-      If you didn’t request a password reset, you can safely ignore this page.
-    </p>
+    <p class="hint" id="hint"></p>
 
     <div class="footer">
       © Ballr
     </div>
   </div>
+
+  <script>
+    const supabaseUrl = 'https://tajvjsrcmttqaoqzhsbs.supabase.co';
+    const supabaseKey = 'sb_publishable_uwTo5ATWT2UiojsGDSa4NQ_zQHmF0kL';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    const resetBtn = document.getElementById('resetBtn');
+    const hint = document.getElementById('hint');
+
+    resetBtn.addEventListener('click', async () => {
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!newPassword || !confirmPassword) {
+        hint.textContent = 'Please fill both fields.';
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        hint.textContent = 'Passwords do not match.';
+        return;
+      }
+
+      // Récupère le token dans l'URL
+      const params = new URLSearchParams(window.location.search);
+      const access_token = params.get('access_token');
+
+      if (!access_token) {
+        hint.textContent = 'Invalid or missing token.';
+        return;
+      }
+
+      resetBtn.disabled = true;
+      hint.textContent = 'Resetting password...';
+
+      const { error } = await supabase.auth.updateUser(
+  { password: newPassword },
+  { accessToken: access_token } // ✅ ici on passe le token correctement
+);
+
+
+      if (error) {
+        hint.textContent = 'Error: ' + error.message;
+        resetBtn.disabled = false;
+      } else {
+        hint.textContent = '✅ Password successfully reset! You can now return to the app.';
+      }
+    });
+  </script>
 </body>
 </html>
