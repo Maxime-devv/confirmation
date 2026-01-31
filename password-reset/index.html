@@ -78,7 +78,6 @@
 <body>
   <div class="card">
     <h1>Password Reset 🔐</h1>
-
     <p>Enter your new password below to reset your account password.</p>
 
     <input type="password" id="newPassword" placeholder="New password" />
@@ -97,7 +96,7 @@
     // ⚡ Supabase client
     const supabaseUrl = 'https://tajvjsrcmttqaoqzhsbs.supabase.co';
     const supabaseKey = 'sb_publishable_uwTo5ATWT2UiojsGDSa4NQ_zQHmF0kL';
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     const resetBtn = document.getElementById('resetBtn');
     const hint = document.getElementById('hint');
@@ -116,9 +115,10 @@
         return;
       }
 
-      // 🔑 Récupère le token depuis le hash de l'URL (#access_token=...)
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const access_token = hashParams.get('access_token');
+      // 🔹 Récupération du token dans le fragment de l'URL (#access_token=...)
+      const hash = window.location.hash; // "#access_token=..."
+      const params = new URLSearchParams(hash.slice(1)); // retire le #
+      const access_token = params.get('access_token');
 
       if (!access_token) {
         hint.textContent = 'Invalid or missing token.';
@@ -128,16 +128,21 @@
       resetBtn.disabled = true;
       hint.textContent = 'Resetting password...';
 
-      const { error } = await supabaseClient.auth.updateUser(
-        { password: newPassword },
-        { accessToken: access_token } // ✅ on passe le token correctement
-      );
+      try {
+        const { error } = await supabase.auth.updateUser(
+          { password: newPassword },
+          { accessToken: access_token } // ✅ token bien passé
+        );
 
-      if (error) {
-        hint.textContent = 'Error: ' + error.message;
+        if (error) {
+          hint.textContent = 'Error: ' + error.message;
+          resetBtn.disabled = false;
+        } else {
+          hint.textContent = '✅ Password successfully reset! You can now return to the app.';
+        }
+      } catch (err) {
+        hint.textContent = 'Unexpected error: ' + err.message;
         resetBtn.disabled = false;
-      } else {
-        hint.textContent = '✅ Password successfully reset! You can now return to the app.';
       }
     });
   </script>
