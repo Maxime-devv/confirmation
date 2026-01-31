@@ -94,9 +94,10 @@
   </div>
 
   <script>
+    // ⚡ Supabase client
     const supabaseUrl = 'https://tajvjsrcmttqaoqzhsbs.supabase.co';
     const supabaseKey = 'sb_publishable_uwTo5ATWT2UiojsGDSa4NQ_zQHmF0kL';
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     const resetBtn = document.getElementById('resetBtn');
     const hint = document.getElementById('hint');
@@ -115,9 +116,9 @@
         return;
       }
 
-      // Récupère le token dans l'URL
-      const params = new URLSearchParams(window.location.search);
-      const access_token = params.get('access_token');
+      // 🔑 Récupère le token depuis le hash de l'URL (#access_token=...)
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const access_token = hashParams.get('access_token');
 
       if (!access_token) {
         hint.textContent = 'Invalid or missing token.';
@@ -127,11 +128,10 @@
       resetBtn.disabled = true;
       hint.textContent = 'Resetting password...';
 
-      const { error } = await supabase.auth.updateUser(
-  { password: newPassword },
-  { accessToken: access_token } // ✅ ici on passe le token correctement
-);
-
+      const { error } = await supabaseClient.auth.updateUser(
+        { password: newPassword },
+        { accessToken: access_token } // ✅ on passe le token correctement
+      );
 
       if (error) {
         hint.textContent = 'Error: ' + error.message;
